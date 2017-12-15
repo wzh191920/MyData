@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block head %}
+	{{ super()}}
+	<style>
+	tr:nth-child(even){background-color:#EEFFEE;}
+	</style>
+{% endblock %}
+{% block content %}
+<div class="modal fade" id="plus_modal">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button class="close" data-dismiss="modal"><span>&times;</span></button>
+				<h4 class="modal-title">删除类型</h4>
+			</div>
+			<div class="modal-body">
+				<div>类型ID：（该类型未被任何表使用）<input id="del_type_id" class="form-control" type="text" value=""></div>
+			</div>
+			<div class="modal-footer">
+				<button class="btn btn-info" id="plus_yes">确 认</button>
+			</div>
+		</div>
+	</div>
+</div>
+<div style="margin:50px">
+<p>
+	<button type="button" class="btn btn-info" id="plus" onclick="javascrtpt:window.open('{{ url_for('.add_type') }}')">
+		<span class="glyphicon glyphicon-plus"></span>
+	</button>
+	<button type="button" class="btn btn-info" id="minus">
+		<span class="glyphicon glyphicon-minus"></span>
+	</button>
+</p>
+<table class="table table-hover table-condensed table-bordered "style="table-layout:fixed">
+	<thead><tr class="info"><th width="5%">ID</th><th width="25%">名称</th><th width="70%">类型描述</th></tr></thead>
+	<tbody>
+		{% for i in range(num) %}
+		<tr>
+		<td>{{typeinfo[i].id}}</td>
+		<td>{{typeinfo[i].name.decode()}}</td>
+		<td>
+			{% for str in typestrs[i] %}
+				{{str[0]+'('+str[1]+')'}}&nbsp;
+			{% endfor %}
+		</td>
+		{% endfor %}
+		</tr>
+	</tbody>
+</div>
+{% endblock %}
+{% block scripts %}
+{{ super() }}
+<script>
+$('#minus').on('click', function () {
+	$("#del_type_id").val("");
+	$("#plus_modal").modal('show');
+});
+$('#plus_yes').on('click', function () {
+	var id = $("#del_type_id").val();
+	$.ajax({type:"post", dataType:"json", url:"delete_type", data:{type_id:id}, success:function(result){
+		if (result.ret == 0)
+		{
+			location.reload(true);
+		}	
+		else
+		{
+			alert("删除失败,"+result.errmsg);
+		}
+	}});
+	$("button.close").click();
+});
+</script>
+{% endblock %}

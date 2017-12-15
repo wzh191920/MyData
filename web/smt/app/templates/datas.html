@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+{% block head %}
+	{{ super() }}
+	<link href="/bootstrap/css/bootstrap-datetimepicker.min.css" rel="stylesheet" media="screen">
+{% endblock %}
+{% block content %}
+<div class="container-fluid">
+	<div class="row ">
+		<div class="col-md-5">
+			<div class="input-group">
+			<span class="input-group-addon">标签点ID：</span>
+			<input id="point_id" type="text" class="form-control" value="{{id}}">	
+			</div>
+		</div>
+		<div class="col-md-5">
+			<div class="input-group">
+			<span class="input-group-addon">标签点类型：</span>
+			<input id="type_id" type="text" class="form-control" value="{{typeid}}">	
+			</div>
+		</div>
+	</div>
+	<br/>
+	<div class="row ">
+		<div class="col-md-5">
+	        <div class="input-group date dtctl">
+	        	<span class="input-group-addon">开始时间：</span>
+                <input id="start_time" class="form-control"  type="text" value="">
+                <span class="input-group-addon"><span class="glyphicon glyphicon-remove"></span></span>
+                <span class="input-group-addon"><span class="glyphicon glyphicon-th"></span></span>
+	        </div>
+        </div>
+        <div class="col-md-5">
+            <div class="input-group date dtctl">
+	        	<span class="input-group-addon">结束时间：</span>
+                <input id="end_time" class="form-control"  type="text" value="">
+                <span class="input-group-addon"><span class="glyphicon glyphicon-remove"></span></span>
+                <span class="input-group-addon"><span class="glyphicon glyphicon-th"></span></span>
+	        </div>
+        </div>
+        <div class="col-md-2">
+            <button id="search" class="btn btn-info"><span class="glyphicon glyphicon-search"></span> 查 询</button>
+        </div>
+    </div>
+    <div id="tablectl" style="margin-top:20px">
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+{{ super() }}
+<script type="text/javascript" src="/bootstrap/js/bootstrap-datetimepicker.js" charset="UTF-8"></script>
+<script type="text/javascript" src="/bootstrap/js/bootstrap-datetimepicker.zh-CN.js" charset="UTF-8"></script>
+<script type="text/javascript">
+    $('.dtctl').datetimepicker({
+    language:  'zh-CN',
+    weekStart: 1,
+    todayBtn:  1,
+    autoclose: 1,
+    todayHighlight: 1,
+    startView: 2,
+    forceParse: 0,
+    showMeridian: 1,
+    format:'yyyy-mm-dd hh:ii:ss'
+});
+    $('#search').click(function(){
+    	$("#tablectl").empty();
+    	var point_id = $('#point_id').val();
+    	var type_id = $('#type_id').val();
+    	var start_time = $('#start_time').val();
+    	var end_time = $('#end_time').val();
+    	var start_timestamp = Number(new Date(start_time))/1000;
+    	var end_timestamp = Number(new Date(end_time))/1000;
+
+    	if (isNaN(start_timestamp) || isNaN(end_timestamp))
+    	{
+    		alert("请输入时间");
+    		return;
+    	}
+		$("#tablectl").append('<h5 id="search_count"></h5>');
+    	var content_table = $('<table class="table table-hover table-condensed table-bordered "style="table-layout:fixed"><thead><tr id=headtr></tr></thead>');
+    	var table_body = $('<tbody id="tablebody"></tbody>');
+    	content_table.append(table_body);
+    	$("#tablectl").append(content_table);
+	   	$.ajax({type:"post", dataType:"json", url:"/type", data:{"type_id":type_id}, success:function(result){
+				var headtr = $("#headtr");
+				var typestrs = result.typestrs;
+				var th = '<th width="10px">时间</th>';
+				headtr.append(th);
+				jQuery.each(typestrs,function(key,value){ 
+	   				var th = '<th width="10px">'+ value.name +'</th>';
+	   				headtr.append(th);
+				});
+			}
+		});
+		$("#tablectl").append('<div id=waiting class="well well-sm" style="text-align:center;color:red">正在加载...</div>');
+		$.ajax({type:"post", dataType:"json", url:"/alldatas", data:{"type_id":type_id, "point_id":point_id, "start_time":start_timestamp, "end_time":end_timestamp}, success:function(result){
+				var retcode = result.retcode;
+				if (retcode != 0)
+				{
+					$("#waiting").text(result.errmsg);
+					return;
+				}
+				
+				var length = result.length;
+				window.type_length = length;
+				var readable_datas = result.readable_datas;
+				window.all_datas = readable_datas;
+				window.cur_length = 0;
+				var num = 0;
+				$("#search_count").text("共查询到"+readable_datas.length+"条数据")
+				jQuery.each(readable_datas, function(key,value){
+					var tr = $('<tr></tr>');
+					tr.append('<td>'+get_date(value[0]*1000)+'</td>');
+					for (var i=1; i<=length; i++){
+						tr.append('<td>'+value[i]+'</td>');
+					}
+					table_body.append(tr);
+					if (++num > 2000)
+						return false;
+				});
+				$("#waiting").remove();
+				window.cur_length = num;
+				if (num < readable_datas.length)
+				{
+					$("#tablectl").append('<button id="next_search" class="btn btn-info btn-block">继续加载</button>');
+					$('#next_search').click(function(){
+						var readable_datas = window.all_datas;
+				    	var num = 0;
+				    	var table_body = $('#tablebody');
+					   	for (var i=window.cur_length; i<readable_datas.length; i++)
+					   	{
+					    		var tr = $('<tr></tr>');
+					    		var value = readable_datas[i];
+					    		tr.append('<td>'+get_date(value[0]*1000)+'</td>');
+					    		for (var j=1; j<=window.type_length; j++){
+									tr.append('<td>'+value[j]+'</td>');
+								}
+								table_body.append(tr);
+					   		if (++num > 2000)
+					   			break;
+					   	}
+				    	window.cur_length += num;
+				    	if (window.cur_length >= readable_datas.length)
+				    	{
+				    		$("#next_search").remove();
+				    	}
+					});
+				}
+			}
+		});
+
+
+    });
+function add0(m){return m<10?'0'+m:m };  
+function get_date(shijianchuo) {  
+  //shijianchuo是整数，否则要parseInt转换  
+  var time = new Date(shijianchuo);  
+  var y = time.getFullYear();  
+  var m = time.getMonth()+1;  
+  var d = time.getDate();  
+  var h = time.getHours();  
+  var mm = time.getMinutes();  
+  var s = time.getSeconds();  
+  return y+'-'+add0(m)+'-'+add0(d)+' '+add0(h)+':'+add0(mm)+':'+add0(s);  
+}; 
+</script>
+{% endblock %}

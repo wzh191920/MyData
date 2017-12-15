@@ -1,0 +1,307 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="modal fade" id="add_table_modal">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button class="close" data-dismiss="modal"><span>&times;</span></button>
+				<h4 class="modal-title">添加表</h4>
+			</div>
+			<div class="modal-body">
+				<div>使用的类型ID：<input id="table_type_id" class="form-control" type="text" value=""></div>
+			</div>
+			<div class="modal-body">
+				<div>表名：<input id="add_table_name" class="form-control" type="text" value=""></div>
+			</div>
+			<div class="modal-footer">
+				<button class="btn btn-info" id="table_plus_yes">确 认</button>
+			</div>
+		</div>
+	</div>
+</div>
+<div class="modal fade" id="del_table_modal">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button class="close" data-dismiss="modal"><span>&times;</span></button>
+				<h4 class="modal-title">删除表</h4>
+			</div>
+			<div class="modal-body">
+				<div>表ID：<input id="del_table_id" class="form-control" type="text" value=""></div>
+			</div>
+			<div class="modal-footer">
+				<button class="btn btn-info" id="table_minus_yes">确 认</button>
+			</div>
+		</div>
+	</div>
+</div>
+<div class="container-fluid">
+	<div class="row ">
+		<div class="col-md-2">
+			<ul class="list-group">
+				<a href="{{ url_for('.show_types') }}" class="list-group-item small list-group-item-info" target="_blank">类型信息</a>
+				<a href="{{ url_for('.show_datafiles') }}" class="list-group-item small list-group-item-info" target="_blank">数据文件信息</a>
+			</ul>
+			<ul class="list-group" id="table_list">
+				<li href="#" class="list-group-item small list-group-item-success">表&nbsp;&nbsp;
+					<a href="javascript:void(0);" id="add_table" onclick="add_table()"><span class="glyphicon glyphicon-plus"></span></a>&nbsp;&nbsp;
+					<a href="javascript:void(0);" id="del_table" onclick="delete_table()"><span class="glyphicon glyphicon-minus"></span></a>&nbsp;&nbsp;
+					<a href="javascript:void(0);" id="flash_table" onclick="flash_table()"><span class="glyphicon glyphicon-refresh"></span></a>
+				</li>
+				{% for info in table_info %}
+			    	<a href="javascript:void(0);" id = "{{'list'~info.id}}", type_id="{{info.type_id}}", onclick="open_table({{info.id}})" class="list-group-item small">{{info.name.decode()}}</a>
+			    {% endfor %}
+			</ul>
+		</div>
+		<div class="col-md-10">
+			<div class="well well-sm">
+			表信息
+			</div>
+			<ul id="nav" class="nav nav-tabs" style="table-layout: fixed;">
+			</ul>
+			<div class="tab-content">
+			</div>
+		</div>
+	</div>
+</div>
+{% endblock %}
+{% block scripts %}
+{{ super() }}
+<script>
+$(function (){
+	window.all_tab = new Array();
+	window.page_capacity = 2000;
+});
+function open_table(table_id){
+	var tabid = "tab"+table_id
+	if ($("#"+tabid)[0])
+	{//已创建
+		$("#tab"+table_id).tab('show');
+	}
+	else
+	{//未创建
+		var tab = $("#nav");
+		var desc_search = $('<div class="container-fluid"><div class="col-md-8"><h5 id="desc'+table_id+'"></h5></div><div class="col-md-4" style="margin-top:5px"><div class="input-group input-group-sm"><input id="search'+table_id+'" class="form-control" type="text" placeholder="标签点名称查询，%和_是通配符"><div class="input-group-btn"><button id="btn_search'+table_id+'" class="btn btn-success"><span class="glyphicon glyphicon-search"></span> 查 询</button></div></div></div></div>')
+		
+		var table_name = $("#list"+table_id).html();
+			var element = '<li><a href="#table'+table_id+'" data-toggle="tab" id="tab'+table_id+'">'+table_name+'&nbsp;&nbsp;<button class="btn btn-default close_btn btn-xs"><span>&times;</span></button></a></li>';
+			tab.append(element);
+
+		$('button.close_btn').on('click', close_tab);
+
+		var tabcontent = $("div.tab-content");
+		var content_head = $('<div class="tab-pane" id="table'+table_id+'">');
+
+		content_head.append(desc_search);
+		tabcontent.append(content_head);
+	   	$("#tab"+table_id).tab('show');
+		window.active_tableid = table_id;
+		$("#tab"+table_id).on('shown.bs.tab', function (e) {
+			var active_tab = $(e.target).attr("id"); 
+			window.active_tableid = active_tab.substring(3);
+		});
+
+		var type_id = $("#list"+table_id).attr("type_id");
+		var table_desc = $("#desc"+table_id);
+		table_desc.text("ID："+table_id+"， 类型："+type_id);
+		$('#btn_search'+table_id).on('click', function() {
+			var table_id = $(this).attr("id").substring(10);
+			var point_name = $("#search"+table_id).val();
+			
+			$.ajax({type:"post", dataType: "json", url: "point", data:{"tid":table_id, "point_name":point_name}, success: function(result){
+				var page_capacity = window.page_capacity;
+				var tab = $("#nav");
+				var table_page = $("#table_page"+table_id);
+				table_page.remove();
+				table_page = $('<ul id="table_page'+table_id+'" class="pagination pagination-sm" style="margin-bottom:0"></ul>');
+
+				var tabcontent = $("div.tab-content");
+   				var content_head = $("#table"+table_id);
+	   			
+	   			var content_table = $("#point_table"+table_id);
+	   			content_table.remove();
+				content_table = $('<table id="point_table'+table_id+'" class="table table-hover table-condensed table-bordered "style="table-layout:fixed"><thead><tr id=headtr'+table_id+'><th width="5px">ID</th><th width="10px">名称</th></tr></thead>');
+	   			var table_body = $('<tbody id=body'+table_id+'></tbody>');
+				var point_infos = result.point_infos;
+				window.all_tab[table_id]=new Array;
+				window.all_tab[table_id]["point_infos"] = point_infos;
+				window.all_tab[table_id]["cur_page"] = 1;
+				var num = 0;
+	   			jQuery.each(point_infos,function(key,value){ 
+	   				var r = '<tr><td>'+value.id+'</td><td>'+value.name+'</td></tr>';
+	   				table_body.append(r);
+	   				if (++num >= page_capacity)
+	   					return false;
+				});
+				table_page.append('<li class="active" id="page'+table_id+'_'+1+'"><a href="javascript:void(0);" onclick="change_page(1)">1</a></li>')
+				var point_num = point_infos.length-page_capacity;
+				var index = 2;
+				while (point_num > 0)
+				{
+					table_page.append('<li id="page'+table_id+'_'+index+'"><a href="javascript:void(0);" onclick="change_page('+index+')">'+index+'</a></li>');
+					index++;
+					point_num -= page_capacity;
+				}
+
+				content_head.append(table_page);
+				content_table.append(table_body);
+	   			content_head.append(content_table);
+	   			var type_id = $("#list"+table_id).attr("type_id");
+
+	   			table_body.on('click', 'tr', function(){
+	   				var td = $(this).find('td');
+   					window.open("/show_datas/"+td[0].innerHTML+"/"+type_id);
+				});
+				$.ajax({type:"post", dataType:"json", url:"type", data:{"type_id":type_id}, success:function(result){
+						var headtr = $("#headtr"+table_id);
+						var typestrs = result.typestrs;
+						var th = '<th width="10px">时间</th>';
+						headtr.append(th);
+						
+						jQuery.each(typestrs,function(key,value){ 
+			   				var th = '<th width="10px">'+ value.name +'</th>';
+			   				headtr.append(th);
+						});
+					}
+				});
+				var ids = [];
+				$("#body"+table_id).find("tr").each(function(i){
+					var pid = $(this).children("td:first").text();
+					ids.push(pid);
+				});
+				table_desc.text("ID："+table_id+"， 类型："+type_id+"， 标签点总数："+point_infos.length);
+				$.ajax({type:"post", dataType:"json", url:"nowdata", data:{steps:(ids).join('H'),type_id:type_id}, success:function(result){
+					length = result.length;
+					readable_datas = result.readable_datas;
+					var tr = $("#body"+table_id).find("tr:first");
+					jQuery.each(readable_datas, function(key,value){
+						if (value[0] == -1)
+							tr.append('<td>没有值</td>');
+						else
+							tr.append('<td>'+get_date(value[0]*1000)+'</td>');
+						for (var i=1; i<=length; i++){
+							tr.append('<td>'+value[i]+'</td>');
+						}
+						tr = tr.next();
+					});
+				}});
+   		 	}});
+		});
+	}
+}
+
+function change_page(index) {
+	var oldpage = $("#page"+window.active_tableid+"_"+window.all_tab[window.active_tableid].cur_page);
+	var newpage = $("#page"+window.active_tableid+"_"+index);
+	oldpage.removeClass("active");
+	newpage.addClass("active");
+	window.all_tab[window.active_tableid].cur_page = index;
+	var table_body = $("#body"+window.active_tableid);
+	table_body.empty();
+	var point_infos = window.all_tab[window.active_tableid].point_infos;
+				
+	var num = 0;
+	
+	for (var i=window.page_capacity*(index-1); i<point_infos.length; i++)
+	{
+		var value = point_infos[i];
+		var r = '<tr><td>'+value.id+'</td><td>'+value.name+'</td></tr>';
+		table_body.append(r);
+		if (++num >= window.page_capacity)
+			break;
+	}
+	var ids = [];
+	table_body.find("tr").each(function(i){
+		var pid = $(this).children("td:first").text();
+		ids.push(pid);
+	});
+	var type_id = $("#list"+window.active_tableid).attr("type_id");
+	$.ajax({type:"post", dataType:"json", url:"nowdata", data:{steps:(ids).join('H'),type_id:type_id}, success:function(result){
+		length = result.length;
+		readable_datas = result.readable_datas;
+		var tr = $("#body"+window.active_tableid).find("tr:first");
+		jQuery.each(readable_datas, function(key,value){
+			if (value[0] == -1)
+				tr.append('<td>没有值</td>');
+			else
+				tr.append('<td>'+get_date(value[0]*1000)+'</td>');
+			for (var i=1; i<=length; i++){
+				tr.append('<td>'+value[i]+'</td>');
+			}
+			tr = tr.next();
+		});
+	}});
+}
+function close_tab() {
+	var tabid = $(this).closest("a").attr("id");
+	id = tabid.substring(3);
+	tableid = "table"+id;
+	$("#"+tabid).remove();
+	$("#"+tableid).remove();
+}
+function add0(m){return m<10?'0'+m:m };  
+function get_date(shijianchuo) {  
+  //shijianchuo是整数，否则要parseInt转换  
+  var time = new Date(shijianchuo);  
+  var y = time.getFullYear();  
+  var m = time.getMonth()+1;  
+  var d = time.getDate();  
+  var h = time.getHours();  
+  var mm = time.getMinutes();  
+  var s = time.getSeconds();  
+  return y+'-'+add0(m)+'-'+add0(d)+' '+add0(h)+':'+add0(mm)+':'+add0(s);  
+}; 
+
+function flash_table() {
+	var table_list = $("#table_list");
+	var a=table_list.children("a");
+	a.remove();
+	$.ajax({type:"post", dataType:"json", url:"get_tables", success:function(result){
+		var tables = result.tables;
+		jQuery.each(tables, function(key,values){
+			var table_row = '<a href="javascript:void(0);" id = "list'+values["id"]+'", type_id="'+values["type_id"]+'", onclick="open_table('+values["id"]+')" class="list-group-item small">'+values["name"]+'</a>';
+			table_list.append(table_row);
+		});
+	}});
+}
+function add_table() {
+	$("#add_table_name").val("");
+	$("#table_type_id").val("");
+	$("#add_table_modal").modal('show');
+}
+function delete_table() {
+	$("#del_table_id").val("");
+	$("#del_table_modal").modal('show');
+}
+$('#table_plus_yes').on('click', function () {
+	var id = $("#table_type_id").val();
+	var name = $("#add_table_name").val();
+	$.ajax({type:"post", dataType:"json", url:"add_table", data:{table_type_id:id,name:name}, success:function(result){
+		if (result.ret == 0)
+		{
+			flash_table();
+		}	
+		else
+		{
+			alert("添加失败,"+result.errmsg);
+		}
+	}});
+	$("button.close").click();
+});
+$('#table_minus_yes').on('click', function () {
+	var id = $("#del_table_id").val();
+	$.ajax({type:"post", dataType:"json", url:"delete_table", data:{table_id:id}, success:function(result){
+		if (result.ret == 0)
+		{
+			flash_table();
+		}	
+		else
+		{
+			alert("删除失败,"+result.errmsg);
+		}
+	}});
+	$("button.close").click();
+});
+
+</script>
+{% endblock %}

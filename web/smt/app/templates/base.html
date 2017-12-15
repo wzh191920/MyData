@@ -1,0 +1,24 @@
+{% extends "bootstrap/base.html" %}
+{% block title %}{% if titlename %}{{titlename}}{% else %}数据管理{% endif %}{% endblock %}
+{% block head %}
+	{{ super() }}
+	<style>
+	table tbody tr td , a.list-group-item{
+		overflow:hidden;white-space:nowrap;text-overflow:ellipsis;
+	} 
+	</style>
+{% endblock %}
+{% block navbar %}
+<br>
+{% with messages = get_flashed_messages() %}
+  {% if messages %}
+	<ul>
+	{% for message in messages %}
+		<li>{{ message }} </li>
+	{% endfor %}
+	</ul>
+  {% endif %}
+{% endwith %}
+{% endblock %}
+{% block content %}{% endblock %}
+

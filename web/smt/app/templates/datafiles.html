@@ -1,0 +1,242 @@
+{% extends "base.html" %}
+{% block head %}
+	{{ super()}}
+	<link href="/bootstrap/css/bootstrap-datetimepicker.min.css" rel="stylesheet" media="screen">
+	<style>
+	tr:nth-child(even){background-color:#EEFFEE;}
+	div.input-group{margin-bottom:20px}
+	</style>
+{% endblock %}
+{% block content %}
+<div class="modal fade" id="create_modal">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button class="close" data-dismiss="modal"><span>&times;</span></button>
+				<h4 class="modal-title">创建数据文件</h4>
+			</div>
+			<div class="modal-body">
+				<div class="input-group">
+					<span class="input-group-addon">文件名称：</span>
+					<input id="create_file_name" type="text" class="form-control" value="{{typeid}}">	
+				</div>
+				<div class="input-group">
+					<span class="input-group-addon">文件大小：</span>
+					<input id="file_size" type="text" class="form-control" value="{{typeid}}">	
+					<span class="input-group-addon">MB</span>
+				</div>
+				<div class="input-group date dtctl">
+		        	<span class="input-group-addon">开始时间：</span>
+	                <input id="create_start_time" class="form-control"  type="text" value="">
+	                <span class="input-group-addon"><span class="glyphicon glyphicon-remove"></span></span>
+	                <span class="input-group-addon"><span class="glyphicon glyphicon-th"></span></span>
+	        	</div>
+				<div class="input-group date dtctl">
+		        	<span class="input-group-addon">结束时间：</span>
+	                <input id="create_end_time" class="form-control"  type="text" value="">
+	                <span class="input-group-addon"><span class="glyphicon glyphicon-remove"></span></span>
+	                <span class="input-group-addon"><span class="glyphicon glyphicon-th"></span></span>
+	        	</div>
+			</div>
+			<div class="modal-footer">
+				<button class="btn btn-info" id="create_yes">确 认</button>
+			</div>
+		</div>
+	</div>
+</div>
+<div class="modal fade" id="add_modal">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button class="close" data-dismiss="modal"><span>&times;</span></button>
+				<h4 class="modal-title">添加数据文件</h4>
+			</div>
+			<div class="modal-body">
+				<div class="input-group">
+					<span class="input-group-addon">文件名称：</span>
+					<input id="add_file_name" type="text" class="form-control" value="{{typeid}}">	
+				</div>
+			</div>
+			<div class="modal-footer">
+				<button class="btn btn-info" id="add_file_yes">确 认</button>
+			</div>
+		</div>
+	</div>
+</div>
+
+<div style="margin:50px">
+<p>
+	<button type="button" class="btn btn-info" id="create_file">
+		<span class="glyphicon glyphicon-plus"></span> 创建
+	</button>
+	<button type="button" class="btn btn-info" id="add_file">
+		<span class="glyphicon glyphicon-plus"></span> 加入
+	</button>
+</p>
+<table class="table table-hover table-condensed table-bordered "style="table-layout:fixed">
+	<thead><tr class="info"><th width="5%">序号</th><th width="20%">名称</th><th width="20%">开始时间</th><th width="20%">结束时间</th><th width="21%">使用情况</th><th width="7%">排除文件</th><th width="7%">重建索引</th></tr></thead>
+	<tbody>
+		{% for i in range(num) %}
+		<tr>
+		<td>{{i+1}}</td>
+		<td>{{dfinfo[i].filename.decode()}}</td>
+		<td class="date_change">{{dfinfo[i].start_time}}</td>
+		<td class="date_change">{{dfinfo[i].end_time}}</td>
+		<td>
+			<div class="progress" style="margin-bottom: 0px;">
+				<div class="progress-bar progress-bar-success progress-bar-striped" style="color: black;;width: {{dfinfo[i].using_rate}}%;">{{dfinfo[i].using_rate~'%/'~(dfinfo[i].file_size/1048576)~'MB'}}</div>
+			</div>
+		</td>
+		<td>
+			<button type="button" class="btn btn-danger btn-xs">
+				<span class="glyphicon glyphicon-minus"></span>
+			</button>
+		</td>
+		<td>
+			<button type="button" class="btn btn-warning btn-xs">
+				<span class="glyphicon glyphicon-wrench"></span>
+			</button>
+		</td>
+		{% endfor %}
+		</tr>
+	</tbody>
+</div>
+{% endblock %}
+{% block scripts %}
+{{ super() }}
+<script type="text/javascript" src="/bootstrap/js/bootstrap-datetimepicker.js" charset="UTF-8"></script>
+<script type="text/javascript" src="/bootstrap/js/bootstrap-datetimepicker.zh-CN.js" charset="UTF-8"></script>
+<script type="text/javascript">
+$('.dtctl').datetimepicker({
+    language:  'zh-CN',
+    weekStart: 1,
+    todayBtn:  1,
+    autoclose: 1,
+    todayHighlight: 1,
+    startView: 2,
+    forceParse: 0,
+    showMeridian: 1,
+    format:'yyyy-mm-dd hh:ii:ss'
+});
+$('#create_file').on('click', function () {
+	$("#create_file_name").val("");
+	$("#file_size").val("");
+	$("#create_start_time").val("");
+	$("#create_end_time").val("");
+	$("#create_modal").modal('show');
+});
+$('#add_file').on('click', function () {
+	$("#add_file_name").val("");
+	$("#add_modal").modal('show');
+});
+$('button.btn-danger').on('click', function () {
+	var tr = $(this).closest("tr");
+	var td = tr.find('td');
+	var name = td[1].innerHTML;
+	if (confirm("确认排除文件 "+name+" 吗？"))
+	{
+		var start_time = td[2].innerHTML;
+		var start_timestamp = -1;
+		if (start_time != '空文件')
+			start_timestamp = Number(new Date(start_time))/1000;
+		$.ajax({type:"post", dataType:"json", url:"/omit_file", data:{"name":name,"start_time":start_timestamp}, success:function(result){
+				if (result.ret == 0)
+				{
+					location.reload(true);
+				}	
+				else
+				{
+					alert("排除文件失败,"+result.errmsg);
+				}
+			}
+		});
+	}
+});
+$('button.btn-warning').on('click', function () {
+	var tr = $(this).closest("tr");
+	var td = tr.find('td');
+	var name = td[1].innerHTML;
+	if (confirm("确认对文件 "+name+" 重建索引吗？需要消耗一定时间"))
+	{
+		var start_time = td[2].innerHTML;
+		var start_timestamp = -1;
+		if (start_time != '空文件')
+			start_timestamp = Number(new Date(start_time))/1000;
+		$.ajax({type:"post", dataType:"json", url:"/rebuild_index", data:{"name":name,"start_time":start_timestamp}, success:function(result){
+				if (result.ret == 0)
+				{
+					alert("重建索引成功");
+					location.reload(true);
+				}	
+				else
+				{
+					alert("重建索引失败,"+result.errmsg);
+				}
+			}
+		});
+	}
+});
+$('#create_yes').on('click', function () {
+	var name = $("#create_file_name").val();
+	var size = $("#file_size").val();
+	size *= 1024*1024;
+	var start_time = $("#create_start_time").val();
+	var end_time = $("#create_end_time").val();
+	var start_timestamp = Number(new Date(start_time))/1000;
+    var end_timestamp = Number(new Date(end_time))/1000;
+    if (isNaN(start_timestamp) || isNaN(end_timestamp))
+	{
+		alert("请输入时间");
+		return;
+	}
+	$.ajax({type:"post", dataType:"json", url:"/create_file", data:{"name":name,"size":size,"start_time":start_timestamp,"end_time":end_timestamp}, success:function(result){
+			if (result.ret == 0)
+			{
+				location.reload(true);
+			}	
+			else
+			{
+				alert("创建文件失败,"+result.errmsg);
+			}
+		}
+	});
+});
+$('#add_file_yes').on('click', function () {
+	var name = $("#add_file_name").val();
+	$.ajax({type:"post", dataType:"json", url:"/add_file", data:{"name":name}, success:function(result){
+			if (result.ret == 0)
+			{
+				location.reload(true);
+			}	
+			else
+			{
+				alert("加入文件失败,"+result.errmsg);
+			}
+		}
+	});
+});
+function add0(m){return m<10?'0'+m:m };  
+function get_date(shijianchuo) {  
+  //shijianchuo是整数，否则要parseInt转换  
+  var time = new Date(shijianchuo);  
+  var y = time.getFullYear();  
+  var m = time.getMonth()+1;  
+  var d = time.getDate();  
+  var h = time.getHours();  
+  var mm = time.getMinutes();  
+  var s = time.getSeconds();  
+  return y+'-'+add0(m)+'-'+add0(d)+' '+add0(h)+':'+add0(mm)+':'+add0(s);  
+}; 
+$(function() {
+	$("tbody").find(".date_change").each(function(){
+		var dt = $(this).text();
+		if (dt == -1)
+			$(this).text("空文件");
+		else if (dt == 0x7FFFFFFFFFFFFFFF)
+			$(this).text("--");
+		else
+			$(this).text(get_date(dt*1000));
+	});
+});
+</script>
+{% endblock %}

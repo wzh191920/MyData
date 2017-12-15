@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% block head %}
+	{{ super()}}
+	<style>
+	tr:nth-child(even){background-color:#EEFFEE;}
+	</style>
+{% endblock %}
+{% block content %}
+<div style="margin:50px">
+	<div class="input-group">
+		<span class="input-group-addon">自定义类型名称：</span>
+		<input id="type_name" type="text" class="form-control" value="">	
+	</div>
+	<br/>
+	<a href="javascript:void(0);" id="plus" onclick="add_row()"><span class="glyphicon glyphicon-plus" style="font-size:22px"></span></a>&nbsp;&nbsp;
+	<a href="javascript:void(0);" id="minus" onclick="delete_row()"><span class="glyphicon glyphicon-minus" style="font-size:22px"></span></a>
+	<table class="table table-hover table-condensed table-bordered "style="table-layout:fixed">
+		<thead><tr class="info"><th width="10%">序号</th><th width="20%">基本类型</th><th width="70%">基本类型名称</th></tr></thead>
+		<tbody id="table_body">
+		</tbody>
+	</table>
+	<button style="float:right;margin-right:100px" id="create_type" class="btn btn-info">&nbsp;&nbsp;提  交&nbsp;&nbsp;</button>
+</div>
+{% endblock %}
+{% block scripts %}
+{{ super() }}
+<script>
+$(function (){
+	window.row_num = 0;
+	add_row();
+});
+
+function add_row(){
+	
+	if (window.row_num >= 16){
+		alert("只能添加16行");
+		return;
+	}
+	++window.row_num;
+	var vtr = $('<tr id="tr'+window.row_num+'"></tr>');
+	vtr.append('<td style="vertical-align:middle">'+window.row_num+'</td>');
+	var vtd = $('<td></td>');
+	var vbtn_group = $('<div class="btn-group"><button id=btn'+window.row_num+' type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" typeenum="-1">选择一个类型<span class="caret"></span></button></div>');
+	var vbtn_ul = $('<ul class="dropdown-menu" role="menu" style="position:relative"></ul>');
+	vbtn_ul.append('<li><a href="javascript:void(0);" onclick="set_type(1,'+window.row_num+')">char</a></li>');
+	vbtn_ul.append('<li><a href="javascript:void(0);" onclick="set_type(2,'+window.row_num+')">short</a></li>');
+	vbtn_ul.append('<li><a href="javascript:void(0);" onclick="set_type(3,'+window.row_num+')">int</a></li>');
+	vbtn_ul.append('<li><a href="javascript:void(0);" onclick="set_type(4,'+window.row_num+')">long long</a></li>');
+	vbtn_ul.append('<li><a href="javascript:void(0);" onclick="set_type(5,'+window.row_num+')">float</a></li>');
+	vbtn_ul.append('<li><a href="javascript:void(0);" onclick="set_type(6,'+window.row_num+')">double</a></li>');
+	vbtn_ul.append('<li><a href="javascript:void(0);" onclick="set_type(7,'+window.row_num+')">string</a></li>');
+	vbtn_group.append(vbtn_ul);
+	vtd.append(vbtn_group);
+	vtr.append(vtd);
+	vtr.append('<td><input class="form-control" type="text" value=""></td>');
+	$("#table_body").append(vtr);
+}
+function set_type(type_enum, btn_id){
+	var s = '';
+	if (type_enum == 1)
+		s = "char";
+	else if (type_enum == 2)
+		s = "short";
+	else if (type_enum == 3)
+		s = "int";
+	else if (type_enum == 4)
+		s = "long long";
+	else if (type_enum == 5)
+		s = "float";
+	else if (type_enum == 6)
+		s = "double";
+	else if (type_enum == 7)
+		s = "string";
+	var btn = $("#btn"+btn_id);
+	btn.html(s);
+	btn.attr("typeenum", type_enum);
+}
+function delete_row(){
+	if (window.row_num <= 0)
+		return;
+	$("#tr"+window.row_num--).remove();
+}
+
+$("#create_type").click(function(){
+	var type_name = $("#type_name").val();
+	var typeenums = [];
+	var names = [];
+	$("#table_body").find("tr").each(function(i){
+		var tds = $(this).find("td");
+		var typeenum = tds.find("button").attr("typeenum");
+		typeenums.push(typeenum);
+		var name = tds.find("input").val();
+		names.push(name);
+	});
+	$.ajax({type:"post", dataType:"json", url:"addtype_result", data:{type_name:type_name,typeenums:(typeenums).join('H'),names:names.join(';')}, success:function(result){
+		if (result.ret == 0)
+		{
+			alert("添加成功");
+			while (window.row_num > 0)
+				$("#tr"+window.row_num--).remove();
+			add_row();
+		}	
+		else
+		{
+			alert("添加失败,"+result.errmsg);
+		}
+
+	}});
+});
+</script>
+{% endblock %}
