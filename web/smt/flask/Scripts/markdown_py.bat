@@ -1,0 +1,1 @@
+@"d:\microblog\flask\scripts\python.exe" "d:\microblog\flask\Scripts\markdown_py" %*
