@@ -1,0 +1,9 @@
+package MydataNet;
+
+message ConnectQuery {
+	required int32 unused = 1;
+}
+
+message ConnectReply {
+	required int32 err = 2;
+}

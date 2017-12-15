@@ -1,0 +1,135 @@
+package Datas;
+
+message DataInfo {
+		required int64 time_stamp = 1; 
+		required bytes data = 2; 
+}
+	
+message WriteNewDatasQuery {
+	message WriteDataInfo {
+		required int32 id = 1; 
+		required int64 time_stamp = 2; 
+		required int64 table_id = 3;
+		required bytes data = 4; 
+	}
+	repeated WriteDataInfo data_infos = 1; 
+}
+
+message WriteNewDatasReply {
+	required int32 err = 1;
+	required int32 num = 2;
+}
+
+message ReadNewDatasQuery {
+	repeated int32 ids = 1; 
+}
+
+message ReadNewDatasReply {
+	required int32 err = 1;
+	repeated DataInfo data_infos = 2; 
+	required int32 num = 3;
+}
+
+message ReadDatasNumQuery {
+	required int32 id = 1; 
+	required int64 time_begin = 2; 
+	required int64 time_end = 3; 
+}
+
+message ReadDatasNumReply {
+	required int32 err = 1;
+	required int32 num = 2;
+}
+
+message ReadDatasQuery {
+	required int32 id = 1; 
+	required int64 time_begin = 2; 
+	required int64 time_end = 3; 
+	required int64 from_time = 4;
+}
+
+message ReadDatasReply {
+	required int32 err = 1;
+	repeated DataInfo data_infos = 2;
+}
+
+message WriteOldDatasQuery{
+	required int32 id = 1;
+	repeated DataInfo data_infos = 2;
+}
+
+message WriteOldDatasReply{
+	required int32 err = 1;
+	required int32 num = 2;
+}
+
+message RemoveDatasQuery{
+	required int32 id = 1;
+	repeated int64 time_stamps = 2;
+}
+
+message RemoveDatasReply{
+	required int32 err = 1;
+}
+
+message GetDataFileNumsQuery {
+	required int32 unused = 1;
+}
+
+message GetDataFileNumsReply {
+	required int32 err = 1;
+	optional int32 num = 2;
+}
+
+message DataFileInfosQuery {
+	required int32 num = 1;
+}
+
+message DataFileInfosReply {
+	required int32 err = 1;
+	message DataFileInfo {
+		required float using_rate = 1; 
+		required int64 size = 2; 
+		required int64 start_time = 3;
+		required int64 end_time = 4;
+		required bytes name = 5; 
+	}
+	repeated DataFileInfo data_file_infos = 2; 
+}
+
+message AddFileQuery{
+	required bytes filename = 1;
+}
+
+message AddFileReply {
+	required int32 err = 1;
+}
+
+message CreateFileQuery{
+	required bytes filename = 1;
+	required int64 size = 2; 
+	required int64 start_time = 3;
+	required int64 end_time = 4;
+}
+
+message CreateFileReply {
+	required int32 err = 1;
+}
+
+message DeleteFileQuery {
+	required int64 start_time = 1;
+	required bytes file_name = 2;
+}
+
+message DeleteFileReply {
+	required int32 err = 1;
+}
+
+message RebuildIndexQuery{
+	required bytes filename = 1;
+	required int64 start_time = 2;
+}
+
+message RebuildIndexReply {
+	required int32 err = 1;
+}

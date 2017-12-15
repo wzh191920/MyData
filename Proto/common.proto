@@ -1,0 +1,17 @@
+package Common;
+
+//head must be fixtype
+message HeadFlag {
+	required fixed32 magic = 1;
+	required fixed32 headcrc = 2;
+}
+
+message Head {
+	required fixed32 bodytype = 1;
+	required fixed32 bodysize = 2;
+	required fixed32 bodycrc = 3;
+}
+
+message CommonMsg {
+	required int32 err = 1;
+}

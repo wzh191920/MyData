@@ -1,0 +1,160 @@
+package Points;
+
+message TypeInfo {
+		required bytes type = 1;
+		required bytes name = 2;
+		required int32 id = 3;
+		required bytes type_names = 4;
+}
+	
+message AddTypeQuery {
+	required bytes type = 1;
+	required bytes name = 2;
+	required bytes type_names = 3;
+}
+
+message AddTypeReply {
+	required int32 err = 1;
+}
+
+message DeleteTypeQuery {
+	required int32 id = 1;
+}
+
+message DeleteTypeReply {
+	required int32 err = 1;
+}
+
+message GetTypesNumQuery {
+	required int32 unused = 1; 
+}
+
+message GetTypesNumReply {
+	required int32 err = 1;
+	optional int32 num = 2; 
+}
+
+message GetTypesQuery {
+	required int32 num = 1; 
+}
+
+message GetTypesReply {
+	required int32 err = 1;
+	repeated TypeInfo type_info_array = 2;
+}
+
+message GetTypeByIDQuery {
+	required int32 id = 1; 
+}
+
+message GetTypeByIDReply {
+	required int32 err = 1;
+	optional TypeInfo info = 2;
+}
+
+message AddTableQuery {
+	required int32 type_id = 1;
+	required bytes name = 2;
+}
+
+message AddTableReply {
+	required int32 err = 1;
+}
+
+message DeleteTableQuery {
+	required int32 id = 1;
+}
+
+message DeleteTableReply {
+	required int32 err = 1;
+}
+
+message GetTablesNumQuery {
+	required int32 unused = 1;
+}
+
+message GetTablesNumReply {
+	required int32 err = 1;
+	optional int32 num = 2;
+}
+
+message GetTablesQuery {
+	required int32 num = 1; 
+}
+
+message GetTablesReply {
+	required int32 err = 1;
+	message TableInfo {
+		required int32 type_id = 1;
+		required bytes name = 2;
+		required int32 id = 3;
+	}
+	repeated TableInfo table_info_array = 2;
+}
+
+message GetTableByIDQuery {
+	required int32 id = 1; 
+}
+
+message GetTableByIDReply {
+	required int32 err = 1;
+	optional int32 type_id = 2;
+	optional bytes name = 3;
+	optional int32 id = 4;
+}
+
+message AddPointsQuery {
+	required int32 table_id = 1;
+	repeated bytes point_names = 2;
+}
+
+message AddPointsReply {
+	required int32 err = 1;
+	optional int32 suc_num = 2;
+}
+
+message DeletePointQuery {
+	required int32 id = 1;
+}
+
+message DeletePointReply {
+	required int32 err = 1;
+}
+
+
+message SearchPointsNumQuery {
+	required bytes table_name = 1;
+	required bytes point_name = 2;
+}
+
+message SearchPointsNumByIDQuery {
+	required int32 table_id = 1;
+	required bytes point_name = 2;
+}
+
+message SearchPointsNumReply {
+	required int32 err = 1;
+	optional int32 num = 2;
+}
+
+message SearchPointsQuery {
+	required bytes table_name = 1;
+	required bytes point_name = 2;
+	required int32 from_id = 3;
+}
+
+message SearchPointsByIDQuery {
+	required int32 table_id = 1;
+	required bytes point_name = 2;
+	required int32 from_id = 3;
+}
+
+message SearchPointsReply {
+	required int32 err = 1;
+	message PointInfo {
+		required int32 table_id = 1;
+		required bytes name = 2;
+		required int32 id = 3;
+	}
+	repeated PointInfo point_info_array = 2;
+}
