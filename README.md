@@ -12,3 +12,11 @@ MyData Server，主要用于存储有时间标记的仪器仪表数据和日志�
 感谢您的关注，希望这款数据库能够满足您的要求！如果您有任何建议请邮件至wzh191920@sina.com，我会尽快给您回复。
 
 （第三方库暂时还没上传）
+
+管理页面截图：
+
+![image](https://github.com/wzh191920/MyData/blob/master/screenshots/1.JPG)
+
+![image](https://github.com/wzh191920/MyData/blob/master/screenshots/3.JPG)
+
+![image](https://github.com/wzh191920/MyData/blob/master/screenshots/2.JPG)
