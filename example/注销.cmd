@@ -1,0 +1,2 @@
+.\MyData.exe delete
+pause

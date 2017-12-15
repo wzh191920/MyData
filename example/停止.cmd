@@ -1,0 +1,2 @@
+.\MyData.exe stop
+pause
